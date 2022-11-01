@@ -184,6 +184,7 @@ CoreApp.getInitialProps = async (initialProps) => {
     locale: 'en',
     emailEnabled: false,
     newPlexLogin: true,
+    enableForwardAuth: true,
   };
 
   if (ctx.res) {
@@ -210,8 +211,15 @@ CoreApp.getInitialProps = async (initialProps) => {
           `http://localhost:${process.env.PORT || 5055}/api/v1/auth/me`,
           {
             headers:
-              ctx.req && ctx.req.headers.cookie
-                ? { cookie: ctx.req.headers.cookie }
+              ctx.req && ctx.req.headers
+                ? {
+                    ...(ctx.req.headers.cookie && {
+                      cookie: ctx.req.headers.cookie,
+                    }),
+                    ...(ctx.req.headers['x-plex-token'] && {
+                      'x-plex-token': ctx.req.headers['x-plex-token'] as string,
+                    }),
+                  }
                 : undefined,
           }
         );

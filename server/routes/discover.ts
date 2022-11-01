@@ -1,4 +1,4 @@
-import PlexTvAPI from '@server/api/plextv';
+import { PlexTvAPI } from '@server/api/plextv';
 import TheMovieDb from '@server/api/themoviedb';
 import { MediaType } from '@server/constants/media';
 import { getRepository } from '@server/datasource';
