@@ -2,7 +2,6 @@ import { PlexTvAPI, type PlexUser } from '@server/api/plextv';
 import { UserType } from '@server/constants/user';
 import { getRepository } from '@server/datasource';
 import { User } from '@server/entity/User';
-import { Permission } from '@server/lib/permissions';
 import { getSettings } from '@server/lib/settings';
 import logger from '@server/logger';
 
@@ -29,6 +28,7 @@ const getUserByPlexAccount = async (
     })
     .getOne();
 };
+
 const createPlexUser = async (
   account: PlexUser,
   permissions: Permission
@@ -77,14 +77,6 @@ export const getOrCreatePlexUser = async (
   // Plex account ID, or the e-mail attached to the account. If it does, we're done: just return the
   // user.
   let user = await getUserByPlexAccount(account);
-
-  // If no such local user exists, and there are no other users at all, create one and assign it
-  // as the administrator. This supports the initial setup experience as the user has to log in
-  // anyways for us to query Plex servers to import.
-  const anyUsersExist = (await userRepository.count()) > 0;
-  if (!user && !anyUsersExist) {
-    return await createPlexUser(account, Permission.ADMIN);
-  }
 
   // We found an associated user, and it's the main user: we always grant access to the main user.
   if (user && user.id === 1) {

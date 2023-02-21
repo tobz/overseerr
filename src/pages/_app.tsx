@@ -185,7 +185,7 @@ CoreApp.getInitialProps = async (initialProps) => {
     emailEnabled: false,
     newPlexLogin: true,
     plexLoginEnabled: false,
-    enableForwardAuth: true,
+    enableForwardAuth: false,
   };
 
   if (ctx.res) {
