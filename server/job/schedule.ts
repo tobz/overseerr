@@ -1,3 +1,4 @@
+import availabilitySync from '@server/lib/availabilitySync';
 import downloadTracker from '@server/lib/downloadtracker';
 import ImageProxy from '@server/lib/imageproxy';
 import { plexFullScanner, plexRecentScanner } from '@server/lib/scanners/plex';
@@ -7,6 +8,7 @@ import type { JobId } from '@server/lib/settings';
 import { getSettings } from '@server/lib/settings';
 import watchlistSync from '@server/lib/watchlistsync';
 import logger from '@server/logger';
+import random from 'lodash/random';
 import schedule from 'node-schedule';
 
 interface ScheduledJob {
@@ -59,20 +61,30 @@ export const startJobs = (): void => {
     cancelFn: () => plexFullScanner.cancel(),
   });
 
-  // Run watchlist sync every 5 minutes
-  scheduledJobs.push({
+  // Watchlist Sync
+  const watchlistSyncJob: ScheduledJob = {
     id: 'plex-watchlist-sync',
     name: 'Plex Watchlist Sync',
     type: 'process',
-    interval: 'minutes',
+    interval: 'fixed',
     cronSchedule: jobs['plex-watchlist-sync'].schedule,
-    job: schedule.scheduleJob(jobs['plex-watchlist-sync'].schedule, () => {
+    job: schedule.scheduleJob(new Date(Date.now() + 1000 * 60 * 20), () => {
       logger.info('Starting scheduled job: Plex Watchlist Sync', {
         label: 'Jobs',
       });
       watchlistSync.syncWatchlist();
     }),
+  };
+
+  // To help alleviate load on Plex's servers, we will add some fuzziness to the next schedule
+  // after each run
+  watchlistSyncJob.job.on('run', () => {
+    watchlistSyncJob.job.schedule(
+      new Date(Math.floor(Date.now() + 1000 * 60 * random(14, 24, true)))
+    );
   });
+
+  scheduledJobs.push(watchlistSyncJob);
 
   // Run full radarr scan every 24 hours
   scheduledJobs.push({
@@ -102,6 +114,23 @@ export const startJobs = (): void => {
     }),
     running: () => sonarrScanner.status().running,
     cancelFn: () => sonarrScanner.cancel(),
+  });
+
+  // Checks if media is still available in plex/sonarr/radarr libs
+  scheduledJobs.push({
+    id: 'availability-sync',
+    name: 'Media Availability Sync',
+    type: 'process',
+    interval: 'hours',
+    cronSchedule: jobs['availability-sync'].schedule,
+    job: schedule.scheduleJob(jobs['availability-sync'].schedule, () => {
+      logger.info('Starting scheduled job: Media Availability Sync', {
+        label: 'Jobs',
+      });
+      availabilitySync.run();
+    }),
+    running: () => availabilitySync.running,
+    cancelFn: () => availabilitySync.cancel(),
   });
 
   // Run download sync every minute
