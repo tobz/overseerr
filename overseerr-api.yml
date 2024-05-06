@@ -135,6 +135,9 @@ components:
         defaultPermissions:
           type: number
           example: 32
+        enableForwardAuth:
+          type: boolean
+          example: true
     PlexLibrary:
       type: object
       properties:
@@ -1843,6 +1846,10 @@ components:
       type: apiKey
       in: header
       name: X-Api-Key
+    plexToken:
+      type: apiKey
+      in: header
+      name: X-Plex-Token
 
 paths:
   /status:

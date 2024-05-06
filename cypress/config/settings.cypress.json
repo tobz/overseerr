@@ -20,7 +20,8 @@
     "originalLanguage": "",
     "trustProxy": false,
     "partialRequestsEnabled": true,
-    "locale": "en"
+    "locale": "en",
+    "enableForwardAuth": true
   },
   "plex": {
     "name": "Seerr",
